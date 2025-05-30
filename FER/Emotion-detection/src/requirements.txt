@@ -1,9 +1,0 @@
-numpy==1.22.0
-opencv-python
-matplotlib
-pandas
-tqdm
-tensorflow==2.9.3
-scipy
-pillow
-
