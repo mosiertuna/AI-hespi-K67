@@ -14,4 +14,5 @@ LINK FOR DOWNLOAD DATA
 - Data after training:
     + For src: https://drive.google.com/file/d/1Q3YvMMFf_ZSlQCnC202v3yZzucZVQYME/view?usp=sharing
     + For src1: https://drive.google.com/file/d/1klJ9lrbG-_OtWJOp_R3yaOu0fdg7gCBo/view?usp=sharing
+    + For src2: https://drive.google.com/file/d/1QQ27iHeeX7gXRj1X4cm6jkuL63HHJdGB/view?usp=sharing
 
