@@ -1,0 +1,189 @@
+NOTEBOOK ĐỂ TRAIN MODEL CHẠY TRÊN KAGGLE
+
+
+# ================================
+# STEP 1: Import
+# ================================
+import pandas as pd
+import numpy as np
+import os
+import cv2
+import shutil
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Dropout, Input, Lambda
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.optimizers import Adam
+
+# ================================
+# STEP 2: Convert fer2013.csv -> image folders
+# ================================
+def prepare_dataset(csv_path, output_dir='data'):
+    df = pd.read_csv(csv_path)
+    emotions = df['emotion'].unique()
+
+    # Create folders
+    for usage in ['Training', 'PublicTest']:
+        folder = 'train' if usage == 'Training' else 'test'
+        for emotion in emotions:
+            os.makedirs(os.path.join(output_dir, folder, str(emotion)), exist_ok=True)
+
+    # Convert each row to image and resize to 96x96
+    for idx, row in tqdm(df.iterrows(), total=len(df), desc='Processing images'):
+        usage = row['Usage']
+        folder = 'train' if usage == 'Training' else ('test' if usage == 'PublicTest' else None)
+        if folder is None:
+            continue  # Skip PrivateTest or unknown usages
+
+        pixels = np.array(row['pixels'].split(), dtype='uint8').reshape(48, 48)
+        # Resize ảnh lên 96x96
+        resized_img = cv2.resize(pixels, (96, 96))
+        emotion = str(row['emotion'])
+        img_path = os.path.join(output_dir, folder, emotion, f'{idx}.jpg')
+        cv2.imwrite(img_path, resized_img)
+
+# ================================
+# STEP 3: Training MobileNetV2
+# ================================
+def train_mobilenetv2(data_dir='data', batch_size=32, num_epoch=10, weights_path=None):
+    def gray_to_rgb(x): return tf.image.grayscale_to_rgb(x)
+
+    train_datagen = ImageDataGenerator(rescale=1./255, horizontal_flip=True)
+    val_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_generator = train_datagen.flow_from_directory(
+        os.path.join(data_dir, 'train'),
+        target_size=(96, 96),
+        batch_size=batch_size,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+
+    val_generator = val_datagen.flow_from_directory(
+        os.path.join(data_dir, 'test'),
+        target_size=(96, 96),
+        batch_size=batch_size,
+        color_mode='grayscale',
+        class_mode='categorical'
+    )
+
+    # Build model
+    inputs = Input(shape=(96, 96, 1))  # Grayscale input
+    x = Lambda(gray_to_rgb)(inputs)    # Convert to RGB
+
+    # Load MobileNetV2 base model with local weights
+    base_model = MobileNetV2(weights=None, include_top=False, input_shape=(96, 96, 3))
+    if weights_path is not None:
+        base_model.load_weights(weights_path)
+
+    base_model.trainable = False
+    x = base_model(x, training=False)
+    x = GlobalAveragePooling2D()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(128, activation='relu')(x)
+    outputs = Dense(7, activation='softmax')(x)
+
+    model = Model(inputs, outputs)
+    model.compile(optimizer=Adam(1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
+
+    # Train model
+    history = model.fit(
+        train_generator,
+        validation_data=val_generator,
+        epochs=num_epoch,
+        steps_per_epoch=len(train_generator),
+        validation_steps=len(val_generator)
+    )
+
+    model.save('final_model.h5')
+    print("✅ Đã lưu model: final_model.h5")
+
+    return history
+
+# ================================
+# STEP 4: Vẽ biểu đồ
+# ================================
+def plot_history(history):
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    epochs_range = range(1, len(acc) + 1)
+
+    plt.figure(figsize=(14, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs_range, acc, label='Train Accuracy')
+    plt.plot(epochs_range, val_acc, label='Val Accuracy')
+    plt.title('Accuracy')
+    plt.legend()
+
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs_range, loss, label='Train Loss')
+    plt.plot(epochs_range, val_loss, label='Val Loss')
+    plt.title('Loss')
+    plt.legend()
+    plt.savefig('training_plot.png')
+    plt.show()
+
+# ================================
+# MAIN: Gọi toàn bộ quy trình
+# ================================
+if __name__ == '__main__':
+    if not os.path.exists('data/train'):
+        print("📁 Chưa có thư mục ảnh, bắt đầu chuyển đổi từ fer2013.csv...")
+        prepare_dataset('/kaggle/input/fer2013-2/fer2013.csv')
+    else:
+        print("✅ Thư mục dữ liệu đã sẵn sàng, bỏ qua bước chuyển đổi.")
+
+    print("🚀 Bắt đầu huấn luyện mô hình MobileNetV2...")
+
+    # Đường dẫn đến file weights MobileNetV2 đã upload
+    weights_path = '/kaggle/input/mobilenet-v2/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_224_no_top.h5'
+
+    history = train_mobilenetv2(num_epoch=10, weights_path=weights_path)
+
+    print("📊 Vẽ biểu đồ kết quả huấn luyện...")
+    plot_history(history)
+
+    # Nén lại output
+    shutil.make_archive('data_output', 'zip', root_dir='.', base_dir='data')
+    print("✅ Đã tạo file data_output.zip")
+2025-05-30 17:10:17.494748: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1748625017.847008      13 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1748625017.951357      13 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+📁 Chưa có thư mục ảnh, bắt đầu chuyển đổi từ fer2013.csv...
+Processing images: 100%|██████████| 35887/35887 [00:19<00:00, 1816.30it/s]
+🚀 Bắt đầu huấn luyện mô hình MobileNetV2...
+Found 28709 images belonging to 7 classes.
+Found 3589 images belonging to 7 classes.
+2025-05-30 17:11:04.691031: E external/local_xla/xla/stream_executor/cuda/cuda_driver.cc:152] failed call to cuInit: INTERNAL: CUDA error: Failed call to cuInit: UNKNOWN ERROR (303)
+Epoch 1/10
+/usr/local/lib/python3.11/dist-packages/keras/src/trainers/data_adapters/py_dataset_adapter.py:121: UserWarning: Your `PyDataset` class should call `super().__init__(**kwargs)` in its constructor. `**kwargs` can include `workers`, `use_multiprocessing`, `max_queue_size`. Do not pass these arguments to `fit()`, as they will be ignored.
+  self._warn_if_super_not_called()
+898/898 ━━━━━━━━━━━━━━━━━━━━ 133s 138ms/step - accuracy: 0.2302 - loss: 2.4740 - val_accuracy: 0.3174 - val_loss: 1.6824
+Epoch 2/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 121s 135ms/step - accuracy: 0.3261 - loss: 1.7063 - val_accuracy: 0.3594 - val_loss: 1.6243
+Epoch 3/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 123s 137ms/step - accuracy: 0.3531 - loss: 1.6406 - val_accuracy: 0.3965 - val_loss: 1.5770
+Epoch 4/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 136s 131ms/step - accuracy: 0.3750 - loss: 1.6149 - val_accuracy: 0.4037 - val_loss: 1.5501
+Epoch 5/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 119s 133ms/step - accuracy: 0.3866 - loss: 1.5818 - val_accuracy: 0.4185 - val_loss: 1.5286
+Epoch 6/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 128s 143ms/step - accuracy: 0.3873 - loss: 1.5743 - val_accuracy: 0.4182 - val_loss: 1.5201
+Epoch 7/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 129s 144ms/step - accuracy: 0.3981 - loss: 1.5442 - val_accuracy: 0.4199 - val_loss: 1.5174
+Epoch 8/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 121s 134ms/step - accuracy: 0.4068 - loss: 1.5422 - val_accuracy: 0.4269 - val_loss: 1.4980
+Epoch 9/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 120s 133ms/step - accuracy: 0.4065 - loss: 1.5265 - val_accuracy: 0.4296 - val_loss: 1.4923
+Epoch 10/10
+898/898 ━━━━━━━━━━━━━━━━━━━━ 119s 133ms/step - accuracy: 0.4111 - loss: 1.5265 - val_accuracy: 0.4316 - val_loss: 1.4841
+✅ Đã lưu model: final_model.h5
+📊 Vẽ biểu đồ kết quả huấn luyện...
+
+✅ Đã tạo file data_output.zip
