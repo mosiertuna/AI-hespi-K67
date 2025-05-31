@@ -151,39 +151,3 @@ if __name__ == '__main__':
     # Nén lại output
     shutil.make_archive('data_output', 'zip', root_dir='.', base_dir='data')
     print("✅ Đã tạo file data_output.zip")
-2025-05-30 17:10:17.494748: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-E0000 00:00:1748625017.847008      13 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-E0000 00:00:1748625017.951357      13 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-📁 Chưa có thư mục ảnh, bắt đầu chuyển đổi từ fer2013.csv...
-Processing images: 100%|██████████| 35887/35887 [00:19<00:00, 1816.30it/s]
-🚀 Bắt đầu huấn luyện mô hình MobileNetV2...
-Found 28709 images belonging to 7 classes.
-Found 3589 images belonging to 7 classes.
-2025-05-30 17:11:04.691031: E external/local_xla/xla/stream_executor/cuda/cuda_driver.cc:152] failed call to cuInit: INTERNAL: CUDA error: Failed call to cuInit: UNKNOWN ERROR (303)
-Epoch 1/10
-/usr/local/lib/python3.11/dist-packages/keras/src/trainers/data_adapters/py_dataset_adapter.py:121: UserWarning: Your `PyDataset` class should call `super().__init__(**kwargs)` in its constructor. `**kwargs` can include `workers`, `use_multiprocessing`, `max_queue_size`. Do not pass these arguments to `fit()`, as they will be ignored.
-  self._warn_if_super_not_called()
-898/898 ━━━━━━━━━━━━━━━━━━━━ 133s 138ms/step - accuracy: 0.2302 - loss: 2.4740 - val_accuracy: 0.3174 - val_loss: 1.6824
-Epoch 2/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 121s 135ms/step - accuracy: 0.3261 - loss: 1.7063 - val_accuracy: 0.3594 - val_loss: 1.6243
-Epoch 3/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 123s 137ms/step - accuracy: 0.3531 - loss: 1.6406 - val_accuracy: 0.3965 - val_loss: 1.5770
-Epoch 4/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 136s 131ms/step - accuracy: 0.3750 - loss: 1.6149 - val_accuracy: 0.4037 - val_loss: 1.5501
-Epoch 5/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 119s 133ms/step - accuracy: 0.3866 - loss: 1.5818 - val_accuracy: 0.4185 - val_loss: 1.5286
-Epoch 6/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 128s 143ms/step - accuracy: 0.3873 - loss: 1.5743 - val_accuracy: 0.4182 - val_loss: 1.5201
-Epoch 7/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 129s 144ms/step - accuracy: 0.3981 - loss: 1.5442 - val_accuracy: 0.4199 - val_loss: 1.5174
-Epoch 8/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 121s 134ms/step - accuracy: 0.4068 - loss: 1.5422 - val_accuracy: 0.4269 - val_loss: 1.4980
-Epoch 9/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 120s 133ms/step - accuracy: 0.4065 - loss: 1.5265 - val_accuracy: 0.4296 - val_loss: 1.4923
-Epoch 10/10
-898/898 ━━━━━━━━━━━━━━━━━━━━ 119s 133ms/step - accuracy: 0.4111 - loss: 1.5265 - val_accuracy: 0.4316 - val_loss: 1.4841
-✅ Đã lưu model: final_model.h5
-📊 Vẽ biểu đồ kết quả huấn luyện...
-
-✅ Đã tạo file data_output.zip
