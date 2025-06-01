@@ -1,6 +1,13 @@
+PROJECT: EMOTION DETECTION
 # AI-hespi-K67
 
-General structure for each folder( src, src1, src2)
+* Application:
+* Language:
+* Technology:
+  
+
+
+*General structure for each folder( src, src1, src2)
 
 Each folder will have:
 - 1 folder data after training contains: 2 folder( train + test)
