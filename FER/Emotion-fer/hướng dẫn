@@ -1,0 +1,7 @@
+tải fer2013.csv về
+chạy lệnh 
+.\venv\Scripts\activate
+
+python emotions.py ----> chương trình display
+python fer.py      ----> chương trình train
+
