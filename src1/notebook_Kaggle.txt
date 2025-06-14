@@ -132,14 +132,23 @@ checkpoint = ModelCheckpoint(
 )
 
 # Step 7: Huấn luyện mô hình
+steps_per_epoch = train_generator.samples // batch_size
+if train_generator.samples % batch_size != 0:
+    steps_per_epoch += 1  # Đảm bảo sử dụng hết dữ liệu, kể cả batch không đầy đủ
+
+validation_steps = validation_generator.samples // batch_size
+if validation_generator.samples % batch_size != 0:
+    validation_steps += 1  # Đảm bảo sử dụng hết dữ liệu, kể cả batch không đầy đủ
+
 history = model.fit(
     train_generator,
-    steps_per_epoch=train_generator.samples // batch_size,
+    steps_per_epoch=steps_per_epoch,
     epochs=epochs,
     validation_data=validation_generator,
-    validation_steps=validation_generator.samples // batch_size,
+    validation_steps=validation_steps,
     callbacks=[checkpoint]
 )
+
 
 # Step 8: Lưu model sau khi train xong
 model.save("final_model.h5")
@@ -177,3 +186,4 @@ def plot_training_history(history):
 
 # Gọi hàm vẽ đồ thị
 plot_training_history(history)
+
