@@ -9,7 +9,7 @@ from tensorflow.keras.models import load_model
 import time
 
 # Load mô hình đã huấn luyện
-model = load_model('final_model.h5')
+model = load_model('final_model1.h5')
 
 # Danh sách cảm xúc
 emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",

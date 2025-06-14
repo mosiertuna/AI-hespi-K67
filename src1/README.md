@@ -6,4 +6,4 @@ python -m venv venv
 
 pip install -r requirements.txt
 
-python emotions.py
+python emotion1.py
