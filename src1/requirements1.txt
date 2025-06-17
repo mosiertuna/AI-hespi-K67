@@ -1,7 +1,0 @@
-numpy
-pandas
-tqdm
-pillow
-opencv-python
-tensorflow==2.12.0
-keras==2.12.0
