@@ -1,0 +1,188 @@
+NOTEBOOK TRAIN MODEL TRÊN KAGGLE
+
+# Step 1: Import libraries
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+import os
+
+# Step 2: Định nghĩa hàm chuyển chuỗi pixel thành số
+def atoi(s):
+    n = 0
+    for i in s:
+        n = n * 10 + ord(i) - ord("0")
+    return n
+
+# Step 3: Tạo tên nhãn cảm xúc
+emotion_labels = {
+    0: "angry",
+    1: "disgusted",
+    2: "fearful",
+    3: "happy",
+    4: "sad",
+    5: "surprised",
+    6: "neutral"
+}
+
+# Step 4: Tạo cấu trúc thư mục lưu ảnh
+base_path = "data"
+sets = ["train", "test"]
+for set_name in sets:
+    for emotion in emotion_labels.values():
+        os.makedirs(os.path.join(base_path, set_name, emotion), exist_ok=True)
+
+# Step 5: Đọc file CSV
+df = pd.read_csv("/kaggle/input/fer2013/fer2013.csv")  # Đường dẫn tới fer2013.csv sau khi bạn upload vào Input
+
+# Step 6: Khởi tạo bộ đếm
+train_counter = {k: 0 for k in emotion_labels.values()}
+test_counter = {k: 0 for k in emotion_labels.values()}
+mat = np.zeros((48, 48), dtype=np.uint8)
+
+# Step 7: Chuyển từng dòng dữ liệu thành ảnh
+print("Đang xử lý và lưu ảnh...")
+for i in tqdm(range(len(df))):
+    emotion_id = df['emotion'][i]
+    emotion = emotion_labels[emotion_id]
+    pixels = df['pixels'][i].split()
+
+    for j in range(2304):
+        x = j // 48
+        y = j % 48
+        mat[x][y] = atoi(pixels[j])
+
+    img = Image.fromarray(mat)
+
+    if i < 28709:
+        count = train_counter[emotion]
+        img.save(os.path.join(base_path, "train", emotion, f"im{count}.png"))
+        train_counter[emotion] += 1
+    else:
+        count = test_counter[emotion]
+        img.save(os.path.join(base_path, "test", emotion, f"im{count}.png"))
+        test_counter[emotion] += 1
+
+print(" Hoàn tất! Dataset đã sẵn sàng để train.")
+
+
+# Step 1: Import thư viện cần thiết
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.callbacks import ModelCheckpoint
+import os
+
+# Step 2: Thiết lập tham số
+img_size = 48
+batch_size = 64
+epochs = 30
+
+# Step 3: Tiền xử lý ảnh với ImageDataGenerator
+train_datagen = ImageDataGenerator(rescale=1./255, horizontal_flip=True)
+test_datagen = ImageDataGenerator(rescale=1./255)
+
+train_generator = train_datagen.flow_from_directory(
+    directory='data/train',
+    target_size=(img_size, img_size),
+    color_mode='grayscale',
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=True
+)
+
+validation_generator = test_datagen.flow_from_directory(
+    directory='data/test',
+    target_size=(img_size, img_size),
+    color_mode='grayscale',
+    batch_size=batch_size,
+    class_mode='categorical',
+    shuffle=False
+)
+
+# Step 4: Xây dựng mô hình CNN
+model = Sequential()
+
+model.add(Conv2D(64, (3, 3), activation='relu', input_shape=(img_size, img_size, 1)))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(256, (3, 3), activation='relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(0.5))
+
+model.add(Dense(7, activation='softmax'))  # 7 lớp cảm xúc
+
+# Step 5: Compile mô hình
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Step 6: Lưu model tốt nhất trong quá trình train
+checkpoint = ModelCheckpoint(
+    'best_model.h5',
+    monitor='val_accuracy',
+    save_best_only=True,
+    mode='max',
+    verbose=1
+)
+
+# Step 7: Huấn luyện mô hình
+steps_per_epoch = train_generator.samples // batch_size
+if train_generator.samples % batch_size != 0:
+    steps_per_epoch += 1  # Đảm bảo sử dụng hết dữ liệu, kể cả batch không đầy đủ
+
+validation_steps = validation_generator.samples // batch_size
+if validation_generator.samples % batch_size != 0:
+    validation_steps += 1  # Đảm bảo sử dụng hết dữ liệu, kể cả batch không đầy đủ
+
+history = model.fit(
+    train_generator,
+    steps_per_epoch=steps_per_epoch,
+    epochs=epochs,
+    validation_data=validation_generator,
+    validation_steps=validation_steps,
+    callbacks=[checkpoint]
+)
+
+
+# Step 8: Lưu model sau khi train xong
+model.save("final_model.h5")
+print(" Đã lưu model thành công thành file 'final_model.h5'")
+
+import matplotlib.pyplot as plt
+
+# Step 9: Vẽ đồ thị loss và accuracy
+def plot_training_history(history):
+    # Lấy dữ liệu từ history
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+    epochs_range = range(len(acc))
+
+    # Tạo các biểu đồ
+    plt.figure(figsize=(14, 6))
+
+    # Đồ thị accuracy
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs_range, acc, label='Train Accuracy')
+    plt.plot(epochs_range, val_acc, label='Validation Accuracy')
+    plt.legend(loc='lower right')
+    plt.title('Training and Validation Accuracy')
+
+    # Đồ thị loss
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs_range, loss, label='Train Loss')
+    plt.plot(epochs_range, val_loss, label='Validation Loss')
+    plt.legend(loc='upper right')
+    plt.title('Training and Validation Loss')
+
+    plt.show()
+
+# Gọi hàm vẽ đồ thị
+plot_training_history(history)
