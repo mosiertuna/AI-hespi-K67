@@ -17,7 +17,7 @@ Each folder will have:
 - 1 file haarcascade_frontalface_default.xml to help us run camera and detection face
 
 LINK FOR DOWNLOAD DATA
-- Dataset: https://www.kaggle.com/datasets/deadskull7/fer2013 (  FER2013)
+- Dataset: https://www.kaggle.com/datasets/deadskull7/fer2013 ( FER2013)
 - Data after training:
     + For src: https://drive.google.com/file/d/1Q3YvMMFf_ZSlQCnC202v3yZzucZVQYME/view?usp=sharing
     + For src1: https://drive.google.com/file/d/1klJ9lrbG-_OtWJOp_R3yaOu0fdg7gCBo/view?usp=sharing
