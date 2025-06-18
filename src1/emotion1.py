@@ -6,7 +6,6 @@
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
-import time
 
 # Load mô hình đã huấn luyện
 model = load_model('final_model1.h5')
@@ -18,12 +17,19 @@ emotion_dict = {0: "Angry", 1: "Disgusted", 2: "Fearful",
 # Load bộ nhận diện khuôn mặt Haar Cascade
 facecasc = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-# Mở webcam
+# Mở webcam (thử lần lượt các index 0, 1 nếu cần)
 cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("Không thể mở webcam với index 0. Thử index 1...")
+    cap = cv2.VideoCapture(1)
+    if not cap.isOpened():
+        print("Không thể mở webcam. Vui lòng kiểm tra kết nối camera.")
+        exit()
 
 while True:
     ret, frame = cap.read()
     if not ret:
+        print("Không thể đọc frame từ webcam. Thoát chương trình.")
         break
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -46,8 +52,6 @@ while True:
         cv2.rectangle(frame, (x, y-40), (x+w, y+h), (0, 255, 0), 2)
         cv2.putText(frame, emotion, (x+5, y-10), cv2.FONT_HERSHEY_SIMPLEX,
                     1, (255, 255, 255), 2, cv2.LINE_AA)
-
-
 
     cv2.imshow('Emotion Detection', cv2.resize(frame, (800, 480)))
 
