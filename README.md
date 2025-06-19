@@ -3,7 +3,12 @@ PROJECT: EMOTION DETECTION
 
 
 📝  Application: Facial Emotion Detection System 
-
+  🔹 Contributors
+  TRAN CAO BAO PHUC
+  MAC THANH BINH
+  LE HAI ANH
+  PHAM DUC NGU BINH
+  
   🔹 Overview
 
 This project presents a  Facial Emotion Detection System  that can automatically recognize human emotions based on facial expressions using computer vision and deep learning techniques. The application is designed to classify facial emotions into categories such as  Happy ,  Sad ,  Angry ,  Surprised ,  Fearful ,  Disgusted , and  Neutral .
